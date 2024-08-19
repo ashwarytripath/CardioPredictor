@@ -1,5 +1,4 @@
-pip install numpy==1.24.0 scikit-learn==1.3.0
-pip install flask
+
 from flask import Flask, request, render_template
 import pickle
 import numpy as np
