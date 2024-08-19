@@ -54,4 +54,10 @@ def predict_route():
         heartRate = float(request.form['heartRate'])
         glucose = float(request.form['glucose'])
 
-        prediction = predict(model, scaler, male, age, currentSmoker, cigsPerDay, BPMeds, prevalentStroke, prevalentHyp, diabetes, totChol, sysBP, diaBP, BMI, heartRate, glu
+        prediction = predict(model, scaler, male, age, currentSmoker, cigsPerDay, BPMeds, prevalentStroke, prevalentHyp, diabetes, totChol, sysBP, diaBP, BMI, heartRate, glucose)
+        prediction_text = "The Patient will have Heart Disease" if prediction == 1 else "The Patient will not have Heart Disease"
+
+        return render_template('index.html', prediction=prediction_text)
+
+if __name__ == '__main__':
+    app.run(debug=True)
