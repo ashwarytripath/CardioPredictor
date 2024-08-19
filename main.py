@@ -1,64 +1,78 @@
+import subprocess
+import sys
 
-from flask import Flask, request, render_template
-import pickle
-import numpy as np
+def install_packages():
+    # Install numpy and scikit-learn with specific versions
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "numpy==1.24.0", "scikit-learn==1.3.0"])
+    
+    # Install Flask
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "flask"])
 
-app = Flask(__name__)
+if __name__ == "__main__":
+    # Install necessary packages
+    install_packages()
 
-# Load model
-model = pickle.load(open('rf_classifier.pkl', 'rb'))
-scaler = pickle.load(open('scaler.pkl', 'rb'))
+    # Import Flask and other required modules
+    from flask import Flask, request, render_template
+    import pickle
+    import numpy as np
 
-# Prediction function
-def predict(model, scaler, male, age, currentSmoker, cigsPerDay, BPMeds, prevalentStroke, prevalentHyp, diabetes,
-            totChol, sysBP, diaBP, BMI, heartRate, glucose):
-    # Encode categorical variables
-    male_encoded = 1 if male.lower() == "male" else 0
-    currentSmoker_encoded = 1 if currentSmoker.lower() == "yes" else 0
-    BPMeds_encoded = 1 if BPMeds.lower() == "yes" else 0
-    prevalentStroke_encoded = 1 if prevalentStroke.lower() == "yes" else 0
-    prevalentHyp_encoded = 1 if prevalentHyp.lower() == "yes" else 0
-    diabetes_encoded = 1 if diabetes.lower() == "yes" else 0
+    app = Flask(__name__)
 
-    # Prepare features array
-    features = np.array([[male_encoded, age, currentSmoker_encoded, cigsPerDay, BPMeds_encoded, prevalentStroke_encoded,
-                          prevalentHyp_encoded, diabetes_encoded, totChol, sysBP, diaBP, BMI, heartRate, glucose]])
+    # Load model
+    model = pickle.load(open('rf_classifier.pkl', 'rb'))
+    scaler = pickle.load(open('scaler.pkl', 'rb'))
 
-    # Scale the features
-    scaled_features = scaler.transform(features)
+    # Prediction function
+    def predict(model, scaler, male, age, currentSmoker, cigsPerDay, BPMeds, prevalentStroke, prevalentHyp, diabetes,
+                totChol, sysBP, diaBP, BMI, heartRate, glucose):
+        # Encode categorical variables
+        male_encoded = 1 if male.lower() == "male" else 0
+        currentSmoker_encoded = 1 if currentSmoker.lower() == "yes" else 0
+        BPMeds_encoded = 1 if BPMeds.lower() == "yes" else 0
+        prevalentStroke_encoded = 1 if prevalentStroke.lower() == "yes" else 0
+        prevalentHyp_encoded = 1 if prevalentHyp.lower() == "yes" else 0
+        diabetes_encoded = 1 if diabetes.lower() == "yes" else 0
 
-    # Predict using the model
-    result = model.predict(scaled_features)
+        # Prepare features array
+        features = np.array([[male_encoded, age, currentSmoker_encoded, cigsPerDay, BPMeds_encoded, prevalentStroke_encoded,
+                              prevalentHyp_encoded, diabetes_encoded, totChol, sysBP, diaBP, BMI, heartRate, glucose]])
 
-    return result[0]
+        # Scale the features
+        scaled_features = scaler.transform(features)
 
-# Routes
-@app.route("/")
-def index():
-    return render_template('index.html')
+        # Predict using the model
+        result = model.predict(scaled_features)
 
-@app.route('/predict', methods=['POST'])
-def predict_route():
-    if request.method == 'POST':
-        male = request.form['male']
-        age = int(request.form['age'])
-        currentSmoker = request.form['currentSmoker']
-        cigsPerDay = float(request.form['cigsPerDay'])
-        BPMeds = request.form['BPMeds']
-        prevalentStroke = request.form['prevalentStroke']
-        prevalentHyp = request.form['prevalentHyp']
-        diabetes = request.form['diabetes']
-        totChol = float(request.form['totChol'])
-        sysBP = float(request.form['sysBP'])
-        diaBP = float(request.form['diaBP'])
-        BMI = float(request.form['BMI'])
-        heartRate = float(request.form['heartRate'])
-        glucose = float(request.form['glucose'])
+        return result[0]
 
-        prediction = predict(model, scaler, male, age, currentSmoker, cigsPerDay, BPMeds, prevalentStroke, prevalentHyp, diabetes, totChol, sysBP, diaBP, BMI, heartRate, glucose)
-        prediction_text = "The Patient has Heart Disease" if prediction == 1 else "The Patient has No Heart Disease"
+    # Routes
+    @app.route("/")
+    def index():
+        return render_template('index.html')
 
-        return render_template('index.html', prediction=prediction_text)
+    @app.route('/predict', methods=['POST'])
+    def predict_route():
+        if request.method == 'POST':
+            male = request.form['male']
+            age = int(request.form['age'])
+            currentSmoker = request.form['currentSmoker']
+            cigsPerDay = float(request.form['cigsPerDay'])
+            BPMeds = request.form['BPMeds']
+            prevalentStroke = request.form['prevalentStroke']
+            prevalentHyp = request.form['prevalentHyp']
+            diabetes = request.form['diabetes']
+            totChol = float(request.form['totChol'])
+            sysBP = float(request.form['sysBP'])
+            diaBP = float(request.form['diaBP'])
+            BMI = float(request.form['BMI'])
+            heartRate = float(request.form['heartRate'])
+            glucose = float(request.form['glucose'])
 
-if __name__ == '__main__':
-    app.run(debug=True)
+            prediction = predict(model, scaler, male, age, currentSmoker, cigsPerDay, BPMeds, prevalentStroke, prevalentHyp, diabetes, totChol, sysBP, diaBP, BMI, heartRate, glucose)
+            prediction_text = "The Patient has Heart Disease" if prediction == 1 else "The Patient has No Heart Disease"
+
+            return render_template('index.html', prediction=prediction_text)
+
+    if __name__ == '__main__':
+        app.run(debug=True)
